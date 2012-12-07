@@ -17,9 +17,9 @@ var flatiron    = require('flatiron'),
 	io          = require('socket.io'),
 	mongodb     = require('mongodb'),
 	json        = require("JSON2"),
-	Db          = mongodb.Db,
-	MongoServer = mongodb.Server,
-	clientDb    = new Db('socket', new MongoServer("127.0.0.1", 27017, {}));
+	Db          = mongodb.Db;
+var mongoUri    = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/socket'; 
+
 
 app.use(flatiron.plugins.http, {});
 app.use(flatiron.plugins.static, {root: __dirname});
@@ -29,8 +29,8 @@ app.config.file({ file: path.join(__dirname, 'config', 'config.json') });
 // MONGODB
 // -----------------------------------------------------------------------------
 var collectionTalk = null;
-clientDb.open(function(err, client) {
-	client.collection('talk', function(err, collection) {
+Db.connect(mongoUri, function (err, db) {
+	db.collection('talk', function(err, collection) {
 		collectionTalk = collection;
 	});
 });
