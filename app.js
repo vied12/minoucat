@@ -98,7 +98,8 @@ app.router.get('/log/:id', function (id) {
 // -----------------------------------------------------------------------------
 var chans = [];
 var users = [];
-app.start(3000, function () {
+var port = process.env.PORT || 5000;
+app.start(port, function () {
 	console.log('Application is now started on port 3000');
 	// -------------------------------------------------------------------------
 	// SOCKET.IO
