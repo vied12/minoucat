@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <link href="/bootstrap/css/bootstrap.min.css" rel="stylesheet" media="screen">
+    </head>
+
+    <body>
+        <style>
+            /* Basic style */
+            .widget .template, .widget .hidden{
+                display: none !important;
+            }
+            /* CHAN */
+            .Chan {
+                margin-top: 50px;
+            }
+            .Chan .overlay {
+                position: absolute;
+                z-index: 10;
+                top: 0; bottom: 0px; right: 0px; left: 0px;
+                background: rgb(0, 0, 0);
+                background: rgba(0, 0, 0, 0.6);
+            }
+            .Chan .overlay .login-box{
+                position: relative;
+                background-color: #DADADA;
+                width: 400px;
+                height: 139px;
+                top: 100px;
+                margin: 0 auto;
+                box-shadow: 5px 5px 10px #2F2F2F;
+                text-align: center;
+                padding-top: 40px;
+            }
+            .Chan .contacts {
+                background-color: #FF9E9E;
+                padding: 10px;
+                box-shadow: 1px 1px 10px #2F2F2F;
+                overflow: auto;
+            }
+            .Chan .contact .username {
+                font-size:1.3em;
+                margin-bottom: 1em;
+                text-align: right;
+            }
+            .Chan .screen {
+                background-color: #AFAFAF;
+            }
+            .Chan .screen {
+                padding: 10px;
+                overflow: auto;
+                border: 1px solid #7B7B7B;
+                box-shadow: 1px 1px 10px #2F2F2F;
+            }
+            .Chan .screen .quote .author {
+                width: 100px;
+                overflow: hidden;
+                float: left;
+                color: #357A36;
+                font-weight: bold;
+            }
+            .Chan .screen .quote.me .author {
+                color: #AE4848;
+            }
+        </style>
+        <div id="content" class="container-fluid">
+            <div class="row-fluid">
+                <div class="span9 Chan widget" data-widget="milf.Chan" data-chan="">
+                    <div class="overlay hidden">
+                        <div class="login-box">
+                            <div class="wrapper">
+                                <h2>USERNAME</h2>
+                                <input type="text" placeholder="username" name="username"/>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid">
+                        <div class="span9 screen">
+                            <div class="quote template">
+                                <div class="author"><span class="author_name out">:</span>:</div>
+                                <span class="message out">message</span>
+                                <div style="clear:both;"></div>
+                            </div>
+                        </div>
+                        <div class="span3 contacts">
+                            <div class="contact template">
+                                <div class="username out">username</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row-fluid send-panel">
+                        <div class="wrapper" style="padding-top:20px">
+                            <div class="span12 input-prepend">
+                                <span class="add-on out" data-field="username">@</span>
+                                <input type="text" class="span11" name="message"/>
+                            </div>
+                            <!-- <div class="span2">
+                                <a href="" class="span12 btn btn-inverse do" data-action="sendMessage">Send</a>
+                            </div> -->
+                        </div>
+                    </div>
+                </div>
+                <div class="span3">
+                </div>
+
+            </div>
+        </div>
+
+        <script src="/jquery.js"></script>
+        <script src="/bootstrap/js/bootstrap.min.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/scripts.js"></script>
+
+    </body>
+</html>

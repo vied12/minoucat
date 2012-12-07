@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+    </head>
+
+    <body>
+        <style>
+            /* Basic style */
+            .widget .template, .widget .hidden{display: none !important;}
+            /* LOG */
+            .Log {
+                font-family: Arial;
+            }
+            .Log .nav {
+                background-color: #B7B7B7;
+                position: absolute;
+                top:0; bottom:0;
+                width: 100px;
+                text-align: center;
+                font-size: 3em;
+            }
+                
+            .Log .nav.previous {left:0;box-shadow: 6px 0px 6px #616161;}
+            .Log .nav.next {right:0;box-shadow: -6px 0px 6px #616161;}
+            .Log a.active .nav:hover {background-color: #E7E7E7;}
+            .Log #next:not(.active) .nav, .Log #previous:not(.active) .nav {
+                background-color: #FFFFFF;
+                opacity: 0.4;    
+            }
+            .Log .conversation {padding: 20px 120px;}
+            .Log .conversation .header .chan{
+                color: #3C873B;
+            }
+            .Log .conversation .quote .author {
+                width: 100px;
+                overflow: hidden;
+                float: left;
+                color: #357A36;
+                font-weight: bold;
+            }
+        </style>
+        <div id="content">
+            <div class="Log widget" data-widget="milf.Log" data-log="">
+                <a id="previous" href="">
+                    <div class="nav previous">
+                        &lt;
+                    </div>
+                </a>
+                <div class="conversation">
+                    <div class="header">
+                        <h1>#<span class="chan out" data-field="chan">chan</span> <span class="out" data-field="date">date</span></h1>
+                    </div>
+                    <div class="body">
+                        <div class="quote template">
+                            <div class="author"><span class="author_name out">:</span>:</div>
+                            <span class="message out">message</span>
+                            <div style="clear:both;"></div>
+                        </div>
+                    </div>
+                </div>
+                <a id="next" href="">
+                    <div class="nav next">
+                        &gt;
+                    </div>
+                </a>
+
+            </div>
+        </div>
+
+        <script src="/jquery.js"></script>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="/scripts.js"></script>
+
+    </body>
+</html>

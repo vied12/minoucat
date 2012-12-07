@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="fr">
+    <head>
+        <script src="/socket.io/socket.io.js"></script>
+        <script src="jquery.js"></script>
+        <script src="scripts.js"></script>
+        <script>
+            var socket = io.connect('http://localhost');
+            socket.emit('login', { pseudo: 'toto' });
+            socket.on('badpseudo', function (data) {
+                socket.emit('login', { pseudo: 'vincent' });
+            });
+        </script>
+    </head>
+
+    <body>
+        <div id="content"></div>
+    </body>
+</html>
