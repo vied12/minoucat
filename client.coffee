@@ -43,7 +43,8 @@ class milf.Chan extends Widget
 			currentUser: null
 			chan       : null
 		}
-		@globalSocket  = io.connect(io.connect("http://"+document.location.hostname))
+		@globalSocket  = io.connect(window.location.hostname)
+		# @globalSocket  = io.connect(io.connect("http://localhost"))
 
 	bindUI: (ui) =>
 		super
