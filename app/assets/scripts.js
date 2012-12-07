@@ -362,7 +362,7 @@ milf.Chan = (function(_super) {
       currentUser: null,
       chan: null
     };
-    this.globalSocket = io.connect(io.connect(window.location.hostname));
+    this.globalSocket = io.connect(io.connect("http://" + window.location.hostname));
   }
 
   Chan.prototype.bindUI = function(ui) {
