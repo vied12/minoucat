@@ -4,7 +4,7 @@
   "dependencies": {
     "union": "0.3.0",
     "plates": "0.4.0",
-    "socket.io": "0.9.0",
+    "socket.io": "0.9.6",
     "mongodb" : "1.2.0",
     "flatiron": "0.3.0",
     "node-static": "0.6.5",

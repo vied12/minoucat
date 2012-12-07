@@ -104,6 +104,7 @@ app.start(port, function () {
 	// -------------------------------------------------------------------------
 	// SOCKET.IO
 	// -------------------------------------------------------------------------
+	console.log("======================", app.server);
 	io = io.listen(app.server);
 	io.configure(function () { 
 		io.set("transports", ["xhr-polling"]);
