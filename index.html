@@ -4,16 +4,60 @@
         <script src="/socket.io/socket.io.js"></script>
         <script src="jquery.js"></script>
         <script src="scripts.js"></script>
-        <script>
-            var socket = io.connect('http://localhost');
-            socket.emit('login', { pseudo: 'toto' });
-            socket.on('badpseudo', function (data) {
-                socket.emit('login', { pseudo: 'vincent' });
-            });
-        </script>
     </head>
-
     <body>
-        <div id="content"></div>
+        <style>
+            /* Basic style */
+            .widget .template, .widget .hidden{
+                display: none !important;
+            }
+            a {color: black;}
+            a:visited {color: black;}
+            a:hover {color: #FF5656;}
+            .Navigation .chans {
+                position: absolute;
+                top: 0; bottom: 0; left: 0;
+                width: 180px;
+                background-color: #444444;
+                color:#DCDCDC;
+                padding: 20px;
+            }
+            .Navigation .chans .chan {
+                cursor: pointer;
+                padding-bottom: 10px;    
+            }
+            .Navigation .chans .chan a {color: #DCDCDC;}
+            .Navigation .content {
+                margin-left: 220px;
+
+            }
+            .Navigation .logs .log {
+                cursor: pointer;
+            }
+        </style>
+        <div class="Navigation widget" data-widget="milf.Navigation" data-data="">
+            <div class="chans">
+                <div class="chan template">
+                    <a href="">
+                        <div class="label">#<span class="name out">NAME</span></div>
+                        <div class="nb_user out">14 users</div>
+                    </a>
+                </div>
+            </div>
+            <div class="content">
+                <div class="logs">
+                    <div class="log template" data-log="">
+                        <a href="">
+                            <div class="name out"> </div>
+                        </a>
+                    </div>
+                </div>
+                <div class="join">
+                    <input type="text"/>
+                </div>
+            </div>
+        </div>
+        <div id="logs">
+        </div>
     </body>
 </html>

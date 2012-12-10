@@ -1,9 +1,9 @@
-var Widget, isDefined,
+var Widget, isDefined, onOkpressed,
   __bind = function(fn, me){ return function(){ return fn.apply(me, arguments); }; },
   __indexOf = Array.prototype.indexOf || function(item) { for (var i = 0, l = this.length; i < l; i++) { if (i in this && this[i] === item) return i; } return -1; },
+  _this = this,
   __hasProp = Object.prototype.hasOwnProperty,
-  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; },
-  _this = this;
+  __extends = function(child, parent) { for (var key in parent) { if (__hasProp.call(parent, key)) child[key] = parent[key]; } function ctor() { this.constructor = child; } ctor.prototype = parent.prototype; child.prototype = new ctor; child.__super__ = parent.prototype; return child; };
 
 window.serious = {};
 
@@ -335,13 +335,18 @@ window.milf = {};
 
 Widget = window.serious.Widget;
 
+onOkpressed = function(ui, cb) {
+  return ui.keypress(function(e) {
+    if (e.which === 13) return cb();
+  });
+};
+
 milf.Chan = (function(_super) {
 
   __extends(Chan, _super);
 
   function Chan() {
     this.registerUser = __bind(this.registerUser, this);
-    this.onOkpressed = __bind(this.onOkpressed, this);
     this.relayout = __bind(this.relayout, this);
     this.sendMessage = __bind(this.sendMessage, this);
     this.refreshUserList = __bind(this.refreshUserList, this);
@@ -371,7 +376,7 @@ milf.Chan = (function(_super) {
     this.relayout();
     if (!(typeof currentUser !== "undefined" && currentUser !== null)) {
       this.uis.loginBox.removeClass("hidden").find("input").focus();
-      this.onOkpressed(this.uis.loginBox, this.registerUser);
+      onOkpressed(this.uis.loginBox, this.registerUser);
     } else {
       this.connectToChan();
     }
@@ -392,7 +397,7 @@ milf.Chan = (function(_super) {
       console.log("new message recieve", data);
       return _this.addMessage(data.author, data.message);
     });
-    return this.onOkpressed(this.uis.messageField.focus(), this.sendMessage);
+    return onOkpressed(this.uis.messageField.focus(), this.sendMessage);
   };
 
   Chan.prototype.addMessage = function(author, message) {
@@ -438,13 +443,6 @@ milf.Chan = (function(_super) {
     height = $(window).height() - this.uis.screen.offset().top - this.uis.sendPanel.height();
     this.uis.screen.css("height", height);
     return this.uis.contacts.css("height", height);
-  };
-
-  Chan.prototype.onOkpressed = function(ui, cb) {
-    var _this = this;
-    return ui.keypress(function(e) {
-      if (e.which === 13) return cb();
-    });
   };
 
   Chan.prototype.registerUser = function() {
@@ -527,6 +525,82 @@ milf.Log = (function(_super) {
   };
 
   return Log;
+
+})(Widget);
+
+milf.Navigation = (function(_super) {
+
+  __extends(Navigation, _super);
+
+  function Navigation() {
+    this.setLogs = __bind(this.setLogs, this);
+    this.setChans = __bind(this.setChans, this);
+    this.setData = __bind(this.setData, this);
+    this.bindUI = __bind(this.bindUI, this);    this.UIS = {
+      chanList: '.chans',
+      chanTmpl: '.chan.template',
+      logList: '.logs',
+      logTmpl: '.log.template',
+      joinField: '.join input'
+    };
+    this.ACTIONS = [];
+    this.cache = {
+      chans: null,
+      logs: null
+    };
+  }
+
+  Navigation.prototype.bindUI = function(ui) {
+    var _this = this;
+    Navigation.__super__.bindUI.apply(this, arguments);
+    this.setData();
+    return onOkpressed(this.uis.joinField, function() {
+      return window.location = 'http://' + window.location.host + '/chan/' + _this.uis.joinField.val();
+    });
+  };
+
+  Navigation.prototype.setData = function() {
+    var data;
+    data = eval('(' + unescape(this.ui.attr('data-data')) + ')');
+    this.cache.chans = data.chans;
+    this.cache.logs = data.logs;
+    console.log(data.logs);
+    this.setChans();
+    return this.setLogs();
+  };
+
+  Navigation.prototype.setChans = function() {
+    var c, name, nui, _ref, _results;
+    _ref = this.cache.chans;
+    _results = [];
+    for (name in _ref) {
+      c = _ref[name];
+      nui = this.cloneTemplate(this.uis.chanTmpl, {
+        name: name
+      });
+      nui.find('a').attr('href', 'http://' + window.location.host + '/chan/' + name);
+      _results.push(this.uis.chanList.append(nui));
+    }
+    return _results;
+  };
+
+  Navigation.prototype.setLogs = function() {
+    var log, nui, _i, _len, _ref, _results;
+    _ref = this.cache.logs;
+    _results = [];
+    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+      log = _ref[_i];
+      nui = this.cloneTemplate(this.uis.logTmpl, {
+        name: log
+      });
+      nui.attr('data-log', log);
+      nui.find('a').attr('href', 'http://' + window.location.host + '/log/' + log);
+      _results.push(this.uis.logList.append(nui));
+    }
+    return _results;
+  };
+
+  return Navigation;
 
 })(Widget);
 

@@ -17,9 +17,9 @@ var flatiron    = require('flatiron'),
 	io          = require('socket.io'),
 	mongodb     = require('mongodb'),
 	json        = require("JSON2"),
+	chans       = {},
 	Db          = mongodb.Db;
 var mongoUri    = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/socket'; 
-
 
 app.use(flatiron.plugins.http, {});
 app.use(flatiron.plugins.static, {root: __dirname});
@@ -34,7 +34,6 @@ Db.connect(mongoUri, function (err, db) {
 		collectionTalk = collection;
 	});
 });
-
 // -----------------------------------------------------------------------------
 // UTILS
 // -----------------------------------------------------------------------------
@@ -44,15 +43,29 @@ function render(_app, page, content, map) {
 		_app.res.writeHead(200,{'Content-Type': 'text/html;charset=utf-8'});
 		_app.res.end(html,'utf-8');
 	});
+}
 
+function getConversations() {
+	collectionTalk.distinct('conversation', function(err, conversations) {
+		return conversations;
+	});
 }
 
 // -----------------------------------------------------------------------------
 // ROUTES
 // -----------------------------------------------------------------------------
 app.router.get('/', function () {
-	var content = { "content": "mon super TP à faire" };
-	render(this, '/index.html', content);
+	var self = this;
+	collectionTalk.distinct('conversation', function(err, conversations) {
+		var data = {
+			'chans' : chans,
+			'logs'  : conversations
+		};
+		var content = {'data': escape(JSON.stringify(data))};
+		var map     = plates.Map();
+		map.where('class').is('Navigation').use('data').as('data-data');
+		render(self, '/index.html', content, map);
+	});
 });
 
 app.router.get('/chan/:chan', function (chan) {
@@ -80,7 +93,7 @@ app.router.get('/log/:id', function (id) {
 				next     : next,
 				previous : previous
 			}
-			content = {logs: escape(JSON.stringify(data))};
+			var content = {logs: escape(JSON.stringify(data))};
 			var map = plates.Map();
 			// NOTE: Fucking bullshit, it doesn't work.
 			// if (previous != null)
@@ -96,7 +109,6 @@ app.router.get('/log/:id', function (id) {
 // -----------------------------------------------------------------------------
 // APPLICATION
 // -----------------------------------------------------------------------------
-var chans = [];
 var users = [];
 var port = process.env.PORT || 5000;
 app.start(port, function () {
@@ -104,7 +116,6 @@ app.start(port, function () {
 	// -------------------------------------------------------------------------
 	// SOCKET.IO
 	// -------------------------------------------------------------------------
-	console.log("======================", app.server);
 	io = io.listen(app.server);
 	io.configure(function () { 
 		io.set("transports", ["xhr-polling"]);

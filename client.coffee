@@ -16,6 +16,10 @@
 window.milf = {}
 Widget      = window.serious.Widget
 
+onOkpressed = (ui, cb) =>
+	ui.keypress (e) =>
+		if e.which == 13
+			cb()
 # -----------------------------------------------------------------------------
 #
 # CHAN
@@ -44,7 +48,6 @@ class milf.Chan extends Widget
 			chan       : null
 		}
 		@globalSocket  = io.connect(window.location.hostname)
-		# @globalSocket  = io.connect(io.connect("http://localhost"))
 
 	bindUI: (ui) =>
 		super
@@ -52,7 +55,7 @@ class milf.Chan extends Widget
 		this.relayout()
 		if not currentUser?
 			@uis.loginBox.removeClass("hidden").find("input").focus()
-			this.onOkpressed(@uis.loginBox, this.registerUser)
+			onOkpressed(@uis.loginBox, this.registerUser)
 		else
 			this.connectToChan()
 		# bind event
@@ -68,7 +71,7 @@ class milf.Chan extends Widget
 			console.log("new message recieve", data)
 			this.addMessage(data.author, data.message)
 		)
-		this.onOkpressed(@uis.messageField.focus(), this.sendMessage)
+		onOkpressed(@uis.messageField.focus(), this.sendMessage)
 
 	addMessage: (author, message) =>
 		nui = this.cloneTemplate(@uis.quoteTmpl, {author_name: author, message:message})
@@ -96,10 +99,6 @@ class milf.Chan extends Widget
 		@uis.screen.css("height", height)
 		@uis.contacts.css("height", height)
 
-	onOkpressed: (ui, cb) =>
-		ui.keypress (e) =>
-			if e.which == 13
-				cb()
 
 	registerUser: =>
 		@cache.currentUser = @uis.usernameField.val()
@@ -122,8 +121,8 @@ class milf.Log extends Widget
 			next      : "#next"
 			previous  : "#previous"
 		}
-		@ACTIONS     = ["previous", "next"]
-		@cache       = {quotes:null, previous:null, next:null}
+		@ACTIONS = ["previous", "next"]
+		@cache   = {quotes:null, previous:null, next:null}
 
 	bindUI: (ui) =>
 		super
@@ -135,7 +134,6 @@ class milf.Log extends Widget
 		@uis.nav.css('padding-top', $(window).height()/2)
 
 	setData: =>
-		# data = document.location.pathname.split("/")[-1..][0]
 		data = eval('(' + unescape(@ui.attr('data-log')) + ')')
 		@cache.quotes   = data.quotes
 		@cache.previous = data.previous
@@ -156,6 +154,51 @@ class milf.Log extends Widget
 			@uis.previous.attr('href', @cache.previous).addClass('active')
 		else
 			@uis.previous.attr('href', null).removeClass('active')
+
+# -----------------------------------------------------------------------------
+#
+# Navigation
+#
+# -----------------------------------------------------------------------------
+class milf.Navigation extends Widget
+
+	constructor: ->
+		@UIS = {
+			chanList : '.chans'
+			chanTmpl : '.chan.template'
+			logList  : '.logs'
+			logTmpl  : '.log.template'
+			joinField : '.join input'
+		}
+		@ACTIONS = []
+		@cache   = {chans : null, logs : null}
+
+	bindUI: (ui) =>
+		super
+		this.setData()
+		onOkpressed @uis.joinField, =>
+			window.location = 'http://'+window.location.host+'/chan/'+ @uis.joinField.val()
+	setData: =>
+		data = eval('(' + unescape(@ui.attr('data-data')) + ')')
+		@cache.chans = data.chans
+		@cache.logs  = data.logs
+		console.log(data.logs)
+		this.setChans()
+		this.setLogs()
+
+	setChans: =>
+		for name, c of @cache.chans
+			nui = this.cloneTemplate(@uis.chanTmpl, {name: name})
+			nui.find('a').attr('href', 'http://'+window.location.host+'/chan/'+ name)
+			@uis.chanList.append(nui)
+
+	setLogs: => 
+		for log in @cache.logs
+			nui = this.cloneTemplate(@uis.logTmpl, {name: log})
+			nui.attr('data-log', log)
+			nui.find('a').attr('href', 'http://'+window.location.host+'/log/'+ log)
+			@uis.logList.append(nui)
+
 $(document).ready => Widget.bindAll()
 
 # EOF
