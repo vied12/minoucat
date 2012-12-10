@@ -71,6 +71,11 @@ class milf.Chan extends Widget
 			console.log("new message recieve", data)
 			this.addMessage(data.author, data.message)
 		)
+		@globalSocket.on('end_of_conversation', (data) =>
+			console.log("end_of_conversation", data)
+			link = 'http://'+window.location.host+'/log/'+ data.conversation)
+			this.addMessage("LOG", "La conversation a été archivée ici <a href=\""+link+"\">"+link+"</a>")
+		)
 		onOkpressed(@uis.messageField.focus(), this.sendMessage)
 
 	addMessage: (author, message) =>

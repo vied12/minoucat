@@ -146,6 +146,7 @@ app.start(port, function () {
 				if (diff > 5) {
 					// end of conversation
 					chans[chan].recording = false;
+					io.sockets.in(chan).emit('end_of_conversation', {conversation:chans[chan].conversation});
 				}
 			}
 			// switch to record mode if msg > 4 words

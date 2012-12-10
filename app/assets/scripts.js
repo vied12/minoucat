@@ -397,6 +397,11 @@ milf.Chan = (function(_super) {
       console.log("new message recieve", data);
       return _this.addMessage(data.author, data.message);
     });
+    this.globalSocket.on('end_of_conversation', function(data) {
+      console.log("end_of_conversation", data);
+      link;
+      return _this.addMessage("LOG", "La conversation a été archivée ici <a href=\"" + link + "\">" + link + "</a>");
+    });
     return onOkpressed(this.uis.messageField.focus(), this.sendMessage);
   };
 
