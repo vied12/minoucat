@@ -393,14 +393,19 @@ milf.Chan = (function(_super) {
       console.log("new user joined", data);
       return _this.refreshUserList(data);
     });
+    this.globalSocket.on('user_leave', function(data) {
+      console.log("user leaving", data);
+      return _this.refreshUserList(data);
+    });
     this.globalSocket.on('new_message', function(data) {
       console.log("new message recieve", data);
       return _this.addMessage(data.author, data.message);
     });
     this.globalSocket.on('end_of_conversation', function(data) {
+      var link;
       console.log("end_of_conversation", data);
-      link;
-      return _this.addMessage("LOG", "La conversation a été archivée ici <a href=\"" + link + "\">" + link + "</a>");
+      link = 'http://' + window.location.host + '/log/' + data.conversation.date;
+      return _this.addMessage("_LOG_", "La conversation a été archivée ici <a href=\"" + link + "\">" + link + "</a>");
     });
     return onOkpressed(this.uis.messageField.focus(), this.sendMessage);
   };
@@ -418,7 +423,6 @@ milf.Chan = (function(_super) {
 
   Chan.prototype.refreshUserList = function(data) {
     var nui, user, _i, _len, _ref, _results;
-    console.log(data.new_user.user, "has joined", data.new_user.name);
     this.uis.contacts.find('.actual').remove();
     _ref = data.all_users;
     _results = [];
@@ -538,20 +542,20 @@ milf.Navigation = (function(_super) {
   __extends(Navigation, _super);
 
   function Navigation() {
-    this.setLogs = __bind(this.setLogs, this);
+    this.setConversations = __bind(this.setConversations, this);
     this.setChans = __bind(this.setChans, this);
     this.setData = __bind(this.setData, this);
     this.bindUI = __bind(this.bindUI, this);    this.UIS = {
       chanList: '.chans',
       chanTmpl: '.chan.template',
-      logList: '.logs',
-      logTmpl: '.log.template',
+      conversationList: '.logs',
+      conversationTmpl: '.log.template',
       joinField: '.join input'
     };
     this.ACTIONS = [];
     this.cache = {
       chans: null,
-      logs: null
+      conversations: null
     };
   }
 
@@ -568,10 +572,9 @@ milf.Navigation = (function(_super) {
     var data;
     data = eval('(' + unescape(this.ui.attr('data-data')) + ')');
     this.cache.chans = data.chans;
-    this.cache.logs = data.logs;
-    console.log(data.logs);
+    this.cache.conversations = data.conversations;
     this.setChans();
-    return this.setLogs();
+    return this.setConversations();
   };
 
   Navigation.prototype.setChans = function() {
@@ -581,7 +584,8 @@ milf.Navigation = (function(_super) {
     for (name in _ref) {
       c = _ref[name];
       nui = this.cloneTemplate(this.uis.chanTmpl, {
-        name: name
+        name: name,
+        nb_user: c.users_count
       });
       nui.find('a').attr('href', 'http://' + window.location.host + '/chan/' + name);
       _results.push(this.uis.chanList.append(nui));
@@ -589,18 +593,18 @@ milf.Navigation = (function(_super) {
     return _results;
   };
 
-  Navigation.prototype.setLogs = function() {
-    var log, nui, _i, _len, _ref, _results;
-    _ref = this.cache.logs;
+  Navigation.prototype.setConversations = function() {
+    var conversation, nui, _i, _len, _ref, _results;
+    _ref = this.cache.conversations;
     _results = [];
     for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-      log = _ref[_i];
-      nui = this.cloneTemplate(this.uis.logTmpl, {
-        name: log
+      conversation = _ref[_i];
+      nui = this.cloneTemplate(this.uis.conversationTmpl, {
+        name: "#" + conversation.chan + "-" + (new Date(conversation.date).toLocaleString())
       });
-      nui.attr('data-log', log);
-      nui.find('a').attr('href', 'http://' + window.location.host + '/log/' + log);
-      _results.push(this.uis.logList.append(nui));
+      nui.attr('data-log', conversation);
+      nui.find('a').attr('href', 'http://' + window.location.host + '/log/' + conversation.date);
+      _results.push(this.uis.conversationList.append(nui));
     }
     return _results;
   };

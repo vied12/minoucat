@@ -9,6 +9,8 @@
 // Last mod : 06-Dec-2012
 // -----------------------------------------------------------------------------
 
+var CONVERSATION_TIMEOUT = 0.1 // in minute
+
 var flatiron    = require('flatiron'),
 	path        = require('path'),
 	plates      = require('plates'),
@@ -18,6 +20,7 @@ var flatiron    = require('flatiron'),
 	mongodb     = require('mongodb'),
 	json        = require("JSON2"),
 	chans       = {},
+	users       = {},
 	Db          = mongodb.Db;
 var mongoUri    = process.env.MONGOLAB_URI || process.env.MONGOHQ_URL || 'mongodb://localhost/socket'; 
 
@@ -45,21 +48,26 @@ function render(_app, page, content, map) {
 	});
 }
 
-function getConversations() {
-	collectionTalk.distinct('conversation', function(err, conversations) {
-		return conversations;
-	});
+function getUsersListForChan(chan) {
+	var users_in_chan   = [];
+	var sockets_in_chan  = io.sockets.clients(chan);
+	for (i=0; i<sockets_in_chan.length; i++) {
+		var user = users[""+sockets_in_chan[i].id];
+		if (user != null) {
+			users_in_chan.push(users[""+sockets_in_chan[i].id]);
+		}
+	}
+	return users_in_chan;
 }
-
 // -----------------------------------------------------------------------------
 // ROUTES
 // -----------------------------------------------------------------------------
 app.router.get('/', function () {
 	var self = this;
-	collectionTalk.distinct('conversation', function(err, conversations) {
+	collectionTalk.find().toArray(function(err, conversations) {
 		var data = {
-			'chans' : chans,
-			'logs'  : conversations
+			'chans'          : chans,
+			'conversations'  : conversations
 		};
 		var content = {'data': escape(JSON.stringify(data))};
 		var map     = plates.Map();
@@ -77,29 +85,25 @@ app.router.get('/chan/:chan', function (chan) {
 
 app.router.get('/log/:id', function (id) {
 	var self = this;
-	collectionTalk.find({"conversation":parseInt(id)}).sort({'date':1}).toArray(function(err, results) {
-		// find next and previous conversation
+	id = parseInt(id);
+	collectionTalk.findOne({"date":id}, function(err, conversation) {
+		// find next and previous conversations
 		var next=null, previous=null;
-		collectionTalk.distinct('conversation', function(err, conversations) {
-			var current = conversations.indexOf(parseInt(id));
+		collectionTalk.distinct('date', function(err, dates) {
+			var current = dates.indexOf(id);
 			if (current > -1) {
-				if (conversations.length > current + 1)
-					next = conversations[current+1].toString();
+				if (dates.length > current + 1)
+					next = dates[current+1].toString();
 				if (current > 0)
-					previous = conversations[current-1].toString(); 
+					previous = dates[current-1].toString(); 
 			}
 			data = {
-				quotes   : results,
+				quotes   : conversation.quotes,
 				next     : next,
 				previous : previous
 			}
 			var content = {logs: escape(JSON.stringify(data))};
 			var map = plates.Map();
-			// NOTE: Fucking bullshit, it doesn't work.
-			// if (previous != null)
-			// 	map.where('id').is('previous').use('previous').as('href');
-			// if (next != null)
-			// 	map.where('id').is('next').use('next').as('href');
 			map.where('class').is('Log').use('logs').as('data-log');
 			render(self, '/log.html', content, map);
 		});
@@ -109,14 +113,29 @@ app.router.get('/log/:id', function (id) {
 // -----------------------------------------------------------------------------
 // APPLICATION
 // -----------------------------------------------------------------------------
-var users = [];
 var port = process.env.PORT || 5000;
 app.start(port, function () {
-	console.log('Application is now started on port 3000');
+	console.log('Application is now started on port ' + port);
+	setInterval(function(){
+		for (chan in chans) {
+			// disable record mode if last message > 5min
+			if (chans[chan].recording && chans[chan].last_message){
+				var diff = new Date().getTime() - chans[chan].last_message;
+				diff     = (diff/1000)/60; // minutes
+				if (diff > CONVERSATION_TIMEOUT) {
+					// end of conversation
+					chans[chan].recording    = false;
+					io.sockets.in(chan).emit('end_of_conversation', {conversation:chans[chan].conversation});
+					chans[chan].conversation = null;
+				}
+			}
+		}
+	},1000);
 	// -------------------------------------------------------------------------
 	// SOCKET.IO
 	// -------------------------------------------------------------------------
 	io = io.listen(app.server);
+	io.disable('heartbeats');
 	io.configure(function () { 
 		io.set("transports", ["xhr-polling"]);
 		io.set("polling duration", 10);
@@ -127,43 +146,42 @@ app.start(port, function () {
 			socket.join(chan);
 			// registrer the chan if doesn't exist
 			if (chans[chan] == undefined) {
-				chans[chan] = {recording:false, conversation:null, last_message:null};
+				chans[chan] = {recording:false, conversation:null, last_message:null, users_count:0};
 			}
-			// get and send to other users the users list
-			users[""+socket.id] = data.user;
-			var users_in_chan   = [];
-			var socket_in_chan  = io.sockets.clients(chan);
-			for (i=0; i<socket_in_chan.length; i++) {
-				users_in_chan.push(users[""+socket_in_chan[i].id]);
-			}
+			chans[chan].users_count += 1;
+			users[""+socket.id]      = data.user;
+			users_in_chan            = getUsersListForChan(chan);
 			io.sockets.in(chan).emit('new_user', {"new_user":data, "all_users":users_in_chan});
 			// on new message
 			socket.on('new_message', function(data) {
-			// disable record mode if last message > 5min
-			if (chans[chan].recording){
-				var diff = new Date().getTime() - chans[chan].last_message.getTime();
-				diff     = (diff/1000)/60; // minutes
-				if (diff > 5) {
-					// end of conversation
-					chans[chan].recording = false;
-					io.sockets.in(chan).emit('end_of_conversation', {conversation:chans[chan].conversation});
-				}
-			}
-			// switch to record mode if msg > 4 words
-			if (!chans[chan].recording && data.message.split(" ").length > 4) {
-				chans[chan].recording    = true;
-				chans[chan].conversation = new Date().getTime();
-			}
-			// record message
-			if (chans[chan].recording) {
-				data['date']             = new Date();
-				data['chan']             = chan;
-				data['conversation']     = chans[chan].conversation;
-				chans[chan].last_message = data['date'];
-				collectionTalk.insert(data);
-			}
 				// broadcast message
 				io.sockets.in(chan).emit('new_message', data);
+				// switch to record mode if msg > 4 words
+				if (!chans[chan].recording && data.message.split(" ").length > 4) {
+					chans[chan].recording = true;
+					// create a conversation
+					var conversation = {
+						date   : new Date().getTime(),
+						chan   : chan,
+						quotes : [] 
+					};
+					chans[chan].conversation = conversation;
+				}
+				// record message
+				if (chans[chan].recording) {
+					data['date'] = new Date().getTime();
+					chans[chan].last_message = data['date'];
+					chans[chan].conversation.quotes.push(data);
+					collectionTalk.update({"date":chans[chan].conversation.date}, chans[chan].conversation, {upsert:true});
+				}
+			});
+			// on user disconnect
+			socket.on('disconnect', function(data) {
+				var user                 = users[socket.id]
+				chans[chan].users_count -= 1;
+				delete users[""+socket.id];
+				var users_in_chan        = getUsersListForChan(chan);
+				io.sockets.in(chan).emit('user_leave', {"user":user, "all_users":users_in_chan});
 			});
 		});
 	});

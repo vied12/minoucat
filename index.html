@@ -3,6 +3,7 @@
     <head>
         <script src="/socket.io/socket.io.js"></script>
         <script src="jquery.js"></script>
+        <script src="meny.js"></script>
         <script src="scripts.js"></script>
     </head>
     <body>
@@ -11,7 +12,7 @@
             .widget .template, .widget .hidden{
                 display: none !important;
             }
-            a {color: black;}
+            a {color: black; text-decoration: none;}
             a:visited {color: black;}
             a:hover {color: #FF5656;}
             .Navigation .chans {
@@ -27,6 +28,13 @@
                 padding-bottom: 10px;    
             }
             .Navigation .chans .chan a {color: #DCDCDC;}
+            .Navigation .chans .chan a:hover {color: #FF5656;}
+            .Navigation .chans .chan .label {
+                font-size: 1.5em;
+            }
+            .Navigation .chans .chan .label .name{
+                color: #84F47F;
+            }
             .Navigation .content {
                 margin-left: 220px;
 
@@ -37,14 +45,16 @@
         </style>
         <div class="Navigation widget" data-widget="milf.Navigation" data-data="">
             <div class="chans">
+                <h2>Salons</h2>
                 <div class="chan template">
                     <a href="">
                         <div class="label">#<span class="name out">NAME</span></div>
-                        <div class="nb_user out">14 users</div>
+                        <span class="nb_user out">14</span> user(s)
                     </a>
                 </div>
             </div>
             <div class="content">
+                <h1>Historique des conversations</h1>
                 <div class="logs">
                     <div class="log template" data-log="">
                         <a href="">
@@ -53,6 +63,7 @@
                     </div>
                 </div>
                 <div class="join">
+                    <h2>Joindre un salon</h2>
                     <input type="text"/>
                 </div>
             </div>

@@ -28,7 +28,7 @@ onOkpressed = (ui, cb) =>
 #  TODO
 #  [X] contact list, get users at login (see room on socket.io)
 #  [X] log discussions
-#  [ ] what about logout ?
+#  [X] what about logout ?
 class milf.Chan extends Widget
 
 	constructor: ->
@@ -63,18 +63,26 @@ class milf.Chan extends Widget
 
 	connectToChan: =>
 		@globalSocket.emit('join_chan', {name:@cache.chan, user:@cache.currentUser})
+		# On new user in chan
 		@globalSocket.on('new_user', (data) =>
 			console.log("new user joined", data)
 			this.refreshUserList(data)
 		)
+		# On user leaving the chan
+		@globalSocket.on('user_leave', (data) =>
+			console.log("user leaving", data)
+			this.refreshUserList(data)
+		)
+		# On new message
 		@globalSocket.on('new_message', (data) =>
 			console.log("new message recieve", data)
 			this.addMessage(data.author, data.message)
 		)
+		# On end of a conversation
 		@globalSocket.on('end_of_conversation', (data) =>
 			console.log("end_of_conversation", data)
-			link = 'http://'+window.location.host+'/log/'+ data.conversation)
-			this.addMessage("LOG", "La conversation a été archivée ici <a href=\""+link+"\">"+link+"</a>")
+			link = 'http://'+window.location.host+'/log/'+ data.conversation.date
+			this.addMessage("_LOG_", "La conversation a été archivée ici <a href=\""+link+"\">"+link+"</a>")
 		)
 		onOkpressed(@uis.messageField.focus(), this.sendMessage)
 
@@ -87,7 +95,6 @@ class milf.Chan extends Widget
 		@uis.screen[0].scrollTop = @uis.screen[0].scrollHeight
 
 	refreshUserList: (data) =>
-		console.log(data.new_user.user, "has joined", data.new_user.name)
 		@uis.contacts.find('.actual').remove()
 		for user in data.all_users
 			nui = this.cloneTemplate(@uis.contactTmpl, {username:user})
@@ -169,40 +176,46 @@ class milf.Navigation extends Widget
 
 	constructor: ->
 		@UIS = {
-			chanList : '.chans'
-			chanTmpl : '.chan.template'
-			logList  : '.logs'
-			logTmpl  : '.log.template'
-			joinField : '.join input'
+			chanList          : '.chans'
+			chanTmpl          : '.chan.template'
+			conversationList  : '.logs'
+			conversationTmpl  : '.log.template'
+			joinField         : '.join input'
 		}
 		@ACTIONS = []
-		@cache   = {chans : null, logs : null}
+		@cache   = {chans : null, conversations : null}
 
 	bindUI: (ui) =>
 		super
 		this.setData()
 		onOkpressed @uis.joinField, =>
 			window.location = 'http://'+window.location.host+'/chan/'+ @uis.joinField.val()
+		# meny = Meny.create({
+		# 	menuElement     : document.querySelector( @UIS.chanList )
+		# 	contentsElement : document.querySelector( '.content' )
+		# 	position        : 'left'
+		# 	height          : 200
+		# 	width           : 200
+		# })
 	setData: =>
 		data = eval('(' + unescape(@ui.attr('data-data')) + ')')
-		@cache.chans = data.chans
-		@cache.logs  = data.logs
-		console.log(data.logs)
+		@cache.chans          = data.chans
+		@cache.conversations  = data.conversations
 		this.setChans()
-		this.setLogs()
+		this.setConversations()
 
 	setChans: =>
 		for name, c of @cache.chans
-			nui = this.cloneTemplate(@uis.chanTmpl, {name: name})
+			nui = this.cloneTemplate(@uis.chanTmpl, {name: name, nb_user: c.users_count})
 			nui.find('a').attr('href', 'http://'+window.location.host+'/chan/'+ name)
 			@uis.chanList.append(nui)
 
-	setLogs: => 
-		for log in @cache.logs
-			nui = this.cloneTemplate(@uis.logTmpl, {name: log})
-			nui.attr('data-log', log)
-			nui.find('a').attr('href', 'http://'+window.location.host+'/log/'+ log)
-			@uis.logList.append(nui)
+	setConversations: => 
+		for conversation in @cache.conversations
+			nui = this.cloneTemplate(@uis.conversationTmpl, {name: "##{conversation.chan}-#{new Date(conversation.date).toLocaleString()}"})
+			nui.attr('data-log', conversation)
+			nui.find('a').attr('href', 'http://'+window.location.host+'/log/'+ conversation.date)
+			@uis.conversationList.append(nui)
 
 $(document).ready => Widget.bindAll()
 
