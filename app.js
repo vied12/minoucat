@@ -135,7 +135,7 @@ app.start(port, function () {
 	// SOCKET.IO
 	// -------------------------------------------------------------------------
 	io = io.listen(app.server);
-	io.disable('heartbeats');
+	// io.disable('heartbeats');
 	io.configure(function () { 
 		io.set("transports", ["xhr-polling"]);
 		io.set("polling duration", 10);
