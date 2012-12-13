@@ -138,7 +138,7 @@ app.start(port, function () {
 	// io.disable('heartbeats');
 	io.configure(function () { 
 		io.set("transports", ["xhr-polling"]);
-		io.set("polling duration", 10);
+		io.set("polling duration", 2);
 	});
 	io.sockets.on('connection', function(socket) {
 		socket.on('join_chan', function(data) {
