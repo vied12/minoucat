@@ -9,7 +9,8 @@
 // Last mod : 06-Dec-2012
 // -----------------------------------------------------------------------------
 
-var CONVERSATION_TIMEOUT = 0.1 // in minute
+var CONVERSATION_TIMEOUT = 5    // in minute
+var TWEET_DELAY          = 6000 // in ms
 
 var flatiron    = require('flatiron'),
 	path        = require('path'),
@@ -19,6 +20,7 @@ var flatiron    = require('flatiron'),
 	io          = require('socket.io'),
 	mongodb     = require('mongodb'),
 	json        = require("JSON2"),
+	http        = require("http"),
 	chans       = {},
 	users       = {},
 	Db          = mongodb.Db;
@@ -58,6 +60,17 @@ function getUsersListForChan(chan) {
 		}
 	}
 	return users_in_chan;
+}
+
+function recordQuote(author, message, chan) {
+	var data = {
+		author : author,
+		message: message,
+		date   : new Date().getTime()
+	};
+	chans[chan].conversation.quotes.push(data);
+	collectionTalk.update({"date":chans[chan].conversation.date}, chans[chan].conversation, {upsert:true});
+	return data;
 }
 // -----------------------------------------------------------------------------
 // ROUTES
@@ -116,6 +129,7 @@ app.router.get('/log/:id', function (id) {
 var port = process.env.PORT || 5000;
 app.start(port, function () {
 	console.log('Application is now started on port ' + port);
+	// check if the conversation is over
 	setInterval(function(){
 		for (chan in chans) {
 			// disable record mode if last message > 5min
@@ -131,6 +145,41 @@ app.start(port, function () {
 			}
 		}
 	},1000);
+	// add tweets to conversations
+	setInterval(function(){
+		for (chan in chans) {
+			if (chans[chan].recording && chans[chan].tweets == null) {
+				var opt = {
+					host   : "search.twitter.com",
+					port   : 80,
+					path   : "/search.json?q="+chan,
+					method : "GET"
+				};
+				var req = http.request(opt, function(res) {
+					var str = "";
+					res.on("data", function(chunk) {
+						str += chunk
+						try {
+							var data = JSON.parse(str);
+							chans[chan].tweets = data.results;
+						} catch (ex) {}
+					});
+				});
+				req.end();
+			}
+			if (chans[chan].recording && chans[chan].tweets != null) {
+				var t  = chans[chan].tweets.shift();
+				if (t != null) {
+					var tweet = {
+						author  : t.from_user_name,
+						message : t.text
+					};
+					io.sockets.in(chan).emit('tweet', tweet);
+					recordQuote(tweet.author, tweet.message, chan);
+				}
+			}
+		}
+	},2000);
 	// -------------------------------------------------------------------------
 	// SOCKET.IO
 	// -------------------------------------------------------------------------
@@ -146,7 +195,7 @@ app.start(port, function () {
 			socket.join(chan);
 			// registrer the chan if doesn't exist
 			if (chans[chan] == undefined) {
-				chans[chan] = {recording:false, conversation:null, last_message:null, users_count:0};
+				chans[chan] = {recording:false, conversation:null, last_message:null, users_count:0, tweets: null};
 			}
 			chans[chan].users_count += 1;
 			users[""+socket.id]      = data.user;
@@ -169,10 +218,8 @@ app.start(port, function () {
 				}
 				// record message
 				if (chans[chan].recording) {
-					data['date'] = new Date().getTime();
-					chans[chan].last_message = data['date'];
-					chans[chan].conversation.quotes.push(data);
-					collectionTalk.update({"date":chans[chan].conversation.date}, chans[chan].conversation, {upsert:true});
+					var quote = recordQuote(data.author, data.message, chan);
+					chans[chan].last_message = quote['date'];
 				}
 			});
 			// on user disconnect

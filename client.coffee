@@ -78,6 +78,11 @@ class milf.Chan extends Widget
 			console.log("new message recieve", data)
 			this.addMessage(data.author, data.message)
 		)
+		# On new tweet
+		@globalSocket.on('tweet', (data) =>
+			console.log("new tweet recieve", data)
+			this.addMessage(data.author, data.message)
+		)
 		# On end of a conversation
 		@globalSocket.on('end_of_conversation', (data) =>
 			console.log("end_of_conversation", data)

@@ -401,6 +401,10 @@ milf.Chan = (function(_super) {
       console.log("new message recieve", data);
       return _this.addMessage(data.author, data.message);
     });
+    this.globalSocket.on('tweet', function(data) {
+      console.log("new tweet recieve", data);
+      return _this.addMessage(data.author, data.message);
+    });
     this.globalSocket.on('end_of_conversation', function(data) {
       var link;
       console.log("end_of_conversation", data);
