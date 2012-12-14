@@ -148,6 +148,7 @@ app.start(port, function () {
 	// add tweets to conversations
 	setInterval(function(){
 		for (chan in chans) {
+			// only for recorded conversation
 			if (chans[chan].recording && chans[chan].tweets == null) {
 				var opt = {
 					host   : "search.twitter.com",
@@ -167,6 +168,7 @@ app.start(port, function () {
 				});
 				req.end();
 			}
+			// only for recorded conversation
 			if (chans[chan].recording && chans[chan].tweets != null) {
 				var t  = chans[chan].tweets.shift();
 				if (t != null) {
@@ -179,7 +181,7 @@ app.start(port, function () {
 				}
 			}
 		}
-	},2000);
+	},TWEET_DELAY);
 	// -------------------------------------------------------------------------
 	// SOCKET.IO
 	// -------------------------------------------------------------------------
