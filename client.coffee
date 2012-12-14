@@ -1,5 +1,5 @@
 # -----------------------------------------------------------------------------
-# Project : MILF
+# Project : MiNOUCAT
 # -----------------------------------------------------------------------------
 # Author : Edouard Richard                                  <edou4rd@gmail.com>
 # -----------------------------------------------------------------------------
@@ -13,8 +13,8 @@
 # > Easy to integrate in an other web project
 # > This is it, Serious Toolkit.
 
-window.milf = {}
-Widget      = window.serious.Widget
+window.minoucat = {}
+Widget          = window.serious.Widget
 
 onOkpressed = (ui, cb) =>
 	ui.keypress (e) =>
@@ -29,7 +29,7 @@ onOkpressed = (ui, cb) =>
 #  [X] contact list, get users at login (see room on socket.io)
 #  [X] log discussions
 #  [X] what about logout ?
-class milf.Chan extends Widget
+class minoucat.Chan extends Widget
 
 	constructor: ->
 		@UIS = {
@@ -86,7 +86,7 @@ class milf.Chan extends Widget
 		# On end of a conversation
 		@globalSocket.on('end_of_conversation', (data) =>
 			console.log("end_of_conversation", data)
-			link = 'http://'+window.location.host+'/log/'+ data.conversation.date
+			link = 'http://'+window.location.host+'/log/'+ data.conversation.permalink
 			this.addMessage("_LOG_", "La conversation a été archivée ici <a href=\""+link+"\">"+link+"</a>")
 		)
 		onOkpressed(@uis.messageField.focus(), this.sendMessage)
@@ -116,7 +116,6 @@ class milf.Chan extends Widget
 		@uis.screen.css("height", height)
 		@uis.contacts.css("height", height)
 
-
 	registerUser: =>
 		@cache.currentUser = @uis.usernameField.val()
 		@uis.loginBox.addClass("hidden")
@@ -128,7 +127,7 @@ class milf.Chan extends Widget
 # LOG
 #
 # -----------------------------------------------------------------------------
-class milf.Log extends Widget
+class minoucat.Log extends Widget
 
 	constructor: ->
 		@UIS = {
@@ -177,7 +176,7 @@ class milf.Log extends Widget
 # Navigation
 #
 # -----------------------------------------------------------------------------
-class milf.Navigation extends Widget
+class minoucat.Navigation extends Widget
 
 	constructor: ->
 		@UIS = {
@@ -195,13 +194,7 @@ class milf.Navigation extends Widget
 		this.setData()
 		onOkpressed @uis.joinField, =>
 			window.location = 'http://'+window.location.host+'/chan/'+ @uis.joinField.val()
-		# meny = Meny.create({
-		# 	menuElement     : document.querySelector( @UIS.chanList )
-		# 	contentsElement : document.querySelector( '.content' )
-		# 	position        : 'left'
-		# 	height          : 200
-		# 	width           : 200
-		# })
+
 	setData: =>
 		data = eval('(' + unescape(@ui.attr('data-data')) + ')')
 		@cache.chans          = data.chans
@@ -219,7 +212,7 @@ class milf.Navigation extends Widget
 		for conversation in @cache.conversations
 			nui = this.cloneTemplate(@uis.conversationTmpl, {name: "##{conversation.chan}-#{new Date(conversation.date).toLocaleString()}"})
 			nui.attr('data-log', conversation)
-			nui.find('a').attr('href', 'http://'+window.location.host+'/log/'+ conversation.date)
+			nui.find('a').attr('href', 'http://'+window.location.host+'/log/'+ conversation.permalink)
 			@uis.conversationList.append(nui)
 
 $(document).ready => Widget.bindAll()
