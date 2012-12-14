@@ -640,37 +640,45 @@
         conversationTmpl: '.log.template',
         joinField: '.join input'
       };
-      this.ACTIONS = [];
       this.cache = {
-        chans: null,
-        conversations: null
+        conversations: []
       };
+      this.ACTIONS = [];
+      this.globalSocket = null;
     }
 
     Navigation.prototype.bindUI = function(ui) {
       var _this = this;
       Navigation.__super__.bindUI.apply(this, arguments);
       this.setData();
-      return onOkpressed(this.uis.joinField, function() {
+      onOkpressed(this.uis.joinField, function() {
         return window.location = 'http://' + window.location.host + '/chan/' + _this.uis.joinField.val();
+      });
+      this.globalSocket = io.connect(window.location.hostname);
+      this.globalSocket.on('chans', function(data) {
+        return _this.setChans(data.chans);
+      });
+      return this.globalSocket.on('new_conversation', function(data) {
+        _this.cache.conversations.unshift(data);
+        return _this.setConversations(_this.cache.conversations);
       });
     };
 
     Navigation.prototype.setData = function() {
       var data;
       data = eval('(' + unescape(this.ui.attr('data-data')) + ')');
-      this.cache.chans = data.chans;
       this.cache.conversations = data.conversations;
-      this.setChans();
-      return this.setConversations();
+      this.setConversations(this.cache.conversations);
+      return this.setChans(data.chans);
     };
 
-    Navigation.prototype.setChans = function() {
-      var c, name, nui, _ref, _results;
-      _ref = this.cache.chans;
+    Navigation.prototype.setChans = function(chans) {
+      var c, name, nui, _results;
+      this.uis.chanList.find('.actual').remove();
+      console.log('chans', chans);
       _results = [];
-      for (name in _ref) {
-        c = _ref[name];
+      for (name in chans) {
+        c = chans[name];
         nui = this.cloneTemplate(this.uis.chanTmpl, {
           name: name,
           nb_user: c.users_count
@@ -681,14 +689,14 @@
       return _results;
     };
 
-    Navigation.prototype.setConversations = function() {
-      var conversation, nui, _i, _len, _ref, _results;
-      _ref = this.cache.conversations;
+    Navigation.prototype.setConversations = function(conversations) {
+      var conversation, nui, _i, _len, _results;
+      this.uis.conversationList.find('.actual').remove();
       _results = [];
-      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
-        conversation = _ref[_i];
+      for (_i = 0, _len = conversations.length; _i < _len; _i++) {
+        conversation = conversations[_i];
         nui = this.cloneTemplate(this.uis.conversationTmpl, {
-          name: "#" + conversation.chan + "-" + (new Date(conversation.date).toLocaleString())
+          name: "sur #" + conversation.chan + ": " + conversation.permalink
         });
         nui.attr('data-log', conversation);
         nui.find('a').attr('href', 'http://' + window.location.host + '/log/' + conversation.permalink);

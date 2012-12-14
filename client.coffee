@@ -186,31 +186,42 @@ class minoucat.Navigation extends Widget
 			conversationTmpl  : '.log.template'
 			joinField         : '.join input'
 		}
-		@ACTIONS = []
-		@cache   = {chans : null, conversations : null}
+		@cache        = {conversations : []}
+		@ACTIONS      = []
+		@globalSocket = null
 
 	bindUI: (ui) =>
 		super
 		this.setData()
 		onOkpressed @uis.joinField, =>
 			window.location = 'http://'+window.location.host+'/chan/'+ @uis.joinField.val()
+		@globalSocket  = io.connect(window.location.hostname)
+		@globalSocket.on('chans', (data) =>
+			this.setChans(data.chans)
+		)
+		@globalSocket.on('new_conversation', (data) =>
+			@cache.conversations.unshift(data)
+			this.setConversations(@cache.conversations)
+		)
 
 	setData: =>
-		data = eval('(' + unescape(@ui.attr('data-data')) + ')')
-		@cache.chans          = data.chans
-		@cache.conversations  = data.conversations
-		this.setChans()
-		this.setConversations()
+		data                 = eval('(' + unescape(@ui.attr('data-data')) + ')')
+		@cache.conversations = data.conversations
+		this.setConversations(@cache.conversations)
+		this.setChans(data.chans)
 
-	setChans: =>
-		for name, c of @cache.chans
+	setChans: (chans) =>
+		@uis.chanList.find('.actual').remove()
+		console.log('chans', chans)
+		for name, c of chans
 			nui = this.cloneTemplate(@uis.chanTmpl, {name: name, nb_user: c.users_count})
 			nui.find('a').attr('href', 'http://'+window.location.host+'/chan/'+ name)
 			@uis.chanList.append(nui)
 
-	setConversations: => 
-		for conversation in @cache.conversations
-			nui = this.cloneTemplate(@uis.conversationTmpl, {name: "##{conversation.chan}-#{new Date(conversation.date).toLocaleString()}"})
+	setConversations: (conversations) =>
+		@uis.conversationList.find('.actual').remove()
+		for conversation in conversations
+			nui = this.cloneTemplate(@uis.conversationTmpl, {name: "sur ##{conversation.chan}: #{conversation.permalink}"})
 			nui.attr('data-log', conversation)
 			nui.find('a').attr('href', 'http://'+window.location.host+'/log/'+ conversation.permalink)
 			@uis.conversationList.append(nui)

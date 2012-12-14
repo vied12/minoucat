@@ -77,18 +77,15 @@ function recordQuote(author, message, chan) {
 function string_to_slug(str) {
 	str = str.replace(/^\s+|\s+$/g, ''); // trim
 	str = str.toLowerCase();
-
 	// remove accents, swap ñ for n, etc
 	var from = "àáäâèéëêìíïîòóöôùúüûñç·/_,:;";
 	var to   = "aaaaeeeeiiiioooouuuunc------";
 	for (var i=0, l=from.length ; i<l ; i++) {
-	str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
+		str = str.replace(new RegExp(from.charAt(i), 'g'), to.charAt(i));
 	}
-
 	str = str.replace(/[^a-z0-9 -]/g, '') // remove invalid chars
 	.replace(/\s+/g, '-') // collapse whitespace and replace by -
 	.replace(/-+/g, '-'); // collapse dashes
-
 	return str;
 }
 // -----------------------------------------------------------------------------
@@ -96,7 +93,7 @@ function string_to_slug(str) {
 // -----------------------------------------------------------------------------
 app.router.get('/', function () {
 	var self = this;
-	collectionTalk.find().toArray(function(err, conversations) {
+	collectionTalk.find({"permalink": {'$ne': null}}, {limit:10, sort: [['date', 'desc']]}).toArray(function(err, conversations) {
 		var data = {
 			'chans'          : chans,
 			'conversations'  : conversations
@@ -207,6 +204,9 @@ app.start(port, function () {
 	io.configure(function () { 
 		io.set("transports", ["xhr-polling"]);
 		io.set("polling duration", 10);
+		// io.set("close timeout", 5);
+		// io.set("heartbeat timeout", 10);
+		// io.set("heartbeat interval", 5);
 	});
 	io.sockets.on('connection', function(socket) {
 		socket.on('join_chan', function(data) {
@@ -220,6 +220,7 @@ app.start(port, function () {
 			users[""+socket.id]      = data.user;
 			users_in_chan            = getUsersListForChan(chan);
 			io.sockets.in(chan).emit('new_user', {"new_user":data, "all_users":users_in_chan});
+			io.sockets.emit('chans', {"chans":chans});
 			// on new message
 			socket.on('new_message', function(data) {
 				// broadcast message
@@ -237,18 +238,21 @@ app.start(port, function () {
 				if (!chans[chan].recording && data.message.split(" ").length > 4) {
 					chans[chan].recording = true;
 					chans[chan].conversation.permalink = string_to_slug(data.message);
-					console.log('-------------------->', chans[chan]);
+					io.sockets.emit('new_conversation', chans[chan].conversation);
 				}
 				// record message
-				// if (chans[chan].recording) {
 				var quote = recordQuote(data.author, data.message, chan);
 				chans[chan].last_message = quote['date'];
-				// }
 			});
 			// on user disconnect
 			socket.on('disconnect', function(data) {
 				var user                 = users[socket.id]
 				chans[chan].users_count -= 1;
+				// if ther is no more user in chan
+				if (chans[chan].users_count <= 0) {
+					delete chans[chan];
+					io.sockets.emit('chans', {"chans":chans});
+				}
 				delete users[""+socket.id];
 				var users_in_chan        = getUsersListForChan(chan);
 				io.sockets.in(chan).emit('user_leave', {"user":user, "all_users":users_in_chan});
