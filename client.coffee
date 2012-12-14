@@ -151,15 +151,16 @@ class minoucat.Log extends Widget
 
 	setData: =>
 		data = eval('(' + unescape(@ui.attr('data-log')) + ')')
-		@cache.quotes   = data.quotes
-		@cache.previous = data.previous
-		@cache.next     = data.next
+		@cache.conversation = data.conversation
+		@cache.previous     = data.previous
+		@cache.next         = data.next
 		this.fill()
 
 	fill: =>
-		this.set('date', new Date(@cache.quotes[0].date).toLocaleString())
-		this.set('chan', @cache.quotes[0].chan)
-		for quote in @cache.quotes
+		this.set('date', new Date(@cache.conversation.quotes[0].date).toLocaleString())
+		this.set('chan', @cache.conversation.chan)
+		@ui.find('.chan_link').attr('href', 'http://'+window.location.host+'/chan/'+ @cache.conversation.chan)
+		for quote in @cache.conversation.quotes
 			nui = this.cloneTemplate(@uis.quoteTmpl, {author_name: quote.author, message:quote.message})
 			@uis.body.append(nui)
 		if @cache.next

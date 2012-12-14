@@ -122,9 +122,9 @@ app.router.get('/log/:id', function (id) {
 				if (next     != null) next     = next.permalink;
 				if (previous != null) previous = previous.permalink;
 				data = {
-					quotes   : conversation.quotes,
-					next     : next,
-					previous : previous
+					conversation : conversation,
+					next         : next,
+					previous     : previous
 				};
 				var content = {logs: escape(JSON.stringify(data))};
 				var map     = plates.Map();

@@ -586,7 +586,7 @@
     Log.prototype.setData = function() {
       var data;
       data = eval('(' + unescape(this.ui.attr('data-log')) + ')');
-      this.cache.quotes = data.quotes;
+      this.cache.conversation = data.conversation;
       this.cache.previous = data.previous;
       this.cache.next = data.next;
       return this.fill();
@@ -594,9 +594,10 @@
 
     Log.prototype.fill = function() {
       var nui, quote, _i, _len, _ref;
-      this.set('date', new Date(this.cache.quotes[0].date).toLocaleString());
-      this.set('chan', this.cache.quotes[0].chan);
-      _ref = this.cache.quotes;
+      this.set('date', new Date(this.cache.conversation.quotes[0].date).toLocaleString());
+      this.set('chan', this.cache.conversation.chan);
+      this.ui.find('.chan_link').attr('href', 'http://' + window.location.host + '/chan/' + this.cache.conversation.chan);
+      _ref = this.cache.conversation.quotes;
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         quote = _ref[_i];
         nui = this.cloneTemplate(this.uis.quoteTmpl, {
