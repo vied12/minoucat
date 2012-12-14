@@ -6,11 +6,11 @@
 // License : GNU Lesser General Public License
 // -----------------------------------------------------------------------------
 // Creation : 06-Dec-2012
-// Last mod : 06-Dec-2012
+// Last mod : 14-Dec-2012
 // -----------------------------------------------------------------------------
 
-var CONVERSATION_TIMEOUT = 3    // in minute
-var TWEET_DELAY          = 6000 // in ms
+var CONVERSATION_TIMEOUT = 5    // in minute
+var TWEET_DELAY          = 10000 // in ms
 
 var flatiron    = require('flatiron'),
 	path        = require('path'),
